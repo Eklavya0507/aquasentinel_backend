@@ -5,89 +5,64 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from ..database import get_db
-from ..deps import get_current_account, require_roles
-from ..models import (
-    Account,
-    CommunityReport,
-    CommunityReportStatus,
-    Profile,
-    Role,
-)
+from ..deps import require_roles
+from ..models import CommunityReport, Role
 from ..schemas import CommunityReportCreate, CommunityReportReview
 
 router = APIRouter(prefix="/reports", tags=["Community Reports"])
 
 
 @router.post("")
-def submit_report(
-    data: CommunityReportCreate,
-    account: Account = Depends(get_current_account),
-    db: Session = Depends(get_db),
-):
-    if data.profile_id:
-        profile = db.scalar(
-            select(Profile).where(
-                Profile.id == data.profile_id,
-                Profile.account_id == account.id,
-            )
-        )
-        if not profile:
-            raise HTTPException(status_code=404, detail="Profile not found")
-
-    row = CommunityReport(
-        **data.model_dump(),
-        reporter_account_id=account.id,
-        status=CommunityReportStatus.SUBMITTED,
-    )
+def submit_report(data: CommunityReportCreate, db: Session = Depends(get_db)):
+    row = CommunityReport(**data.model_dump(), status="SUBMITTED")
     db.add(row)
     db.commit()
     db.refresh(row)
     return {
         "report_id": row.id,
-        "status": row.status.value,
-        "message": "Community signal submitted for review",
+        "status": row.status,
+        "message": "Community Signal — Unverified. Submitted for official review.",
+    }
+
+
+def report_dict(x: CommunityReport):
+    return {
+        "id": x.id,
+        "concern_type": x.concern_type,
+        "summary": x.summary,
+        "description": x.description,
+        "state": x.state,
+        "district": x.district,
+        "locality": x.locality,
+        "urgency": x.urgency,
+        "water_source": x.water_source,
+        "people_affected": x.people_affected,
+        "status": x.status,
+        "review_notes": x.review_notes,
+        "created_at": x.created_at,
+        "reviewed_at": x.reviewed_at,
     }
 
 
 @router.get("")
-def list_reports(
-    status: CommunityReportStatus | None = None,
-    account: Account = Depends(require_roles(Role.GOVERNMENT, Role.ADMIN)),
-    db: Session = Depends(get_db),
-):
-    stmt = select(CommunityReport)
-    if status:
-        stmt = stmt.where(CommunityReport.status == status)
-    rows = db.scalars(stmt.order_by(CommunityReport.created_at.desc())).all()
-    return [
-        {
-            "id": x.id,
-            "concern_type": x.concern_type,
-            "summary": x.summary,
-            "state": x.state,
-            "district": x.district,
-            "urgency": x.urgency,
-            "status": x.status.value,
-            "created_at": x.created_at,
-        }
-        for x in rows
-    ]
+def list_reports(account=Depends(require_roles(Role.GOVERNMENT.value)), db: Session = Depends(get_db)):
+    rows = db.scalars(select(CommunityReport).order_by(CommunityReport.created_at.desc()).limit(100)).all()
+    return [report_dict(x) for x in rows]
 
 
 @router.patch("/{report_id}/review")
 def review_report(
     report_id: int,
     data: CommunityReportReview,
-    account: Account = Depends(require_roles(Role.GOVERNMENT, Role.ADMIN)),
+    account=Depends(require_roles(Role.GOVERNMENT.value)),
     db: Session = Depends(get_db),
 ):
     row = db.get(CommunityReport, report_id)
     if not row:
         raise HTTPException(status_code=404, detail="Community report not found")
-
-    row.status = CommunityReportStatus(data.status)
+    row.status = data.status
     row.review_notes = data.review_notes
-    row.reviewed_by_account_id = account.id
     row.reviewed_at = datetime.utcnow()
     db.commit()
-    return {"status": row.status.value}
+    db.refresh(row)
+    return report_dict(row)

@@ -5,21 +5,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     APP_NAME: str = "AquaSentinel Backend"
     ENVIRONMENT: str = "development"
-    SECRET_KEY: str = "CHANGE_ME"
+    SECRET_KEY: str = "AquaSentinel-Local-Demo-Secret-Key-Change-Before-Deploy-2026"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 1440
-
     DATABASE_URL: str = "sqlite:///./aquasentinel.db"
-
+    CORS_ORIGINS: str = "http://127.0.0.1:5500,http://localhost:5500,https://eklavya0507.github.io"
+    MODEL_B1_PATH: str = "app/ml/B1_disease_risk_model.pkl"
+    MODEL_B1_ENCODER_PATH: str = "app/ml/B1_label_encoder.pkl"
     UPLOAD_DIR: str = "uploads"
-    MAX_UPLOAD_MB: int = 10
-    CORS_ORIGINS: str = "http://127.0.0.1:5500,http://localhost:5500"
-
-    MODEL_A_PATH: str = ""
-    MODEL_A_LABEL_ENCODER_PATH: str = ""
-    MODEL_A_FEATURES_PATH: str = ""
-
-    MODEL_B_PATH: str = ""
-    MODEL_B_FEATURES_PATH: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

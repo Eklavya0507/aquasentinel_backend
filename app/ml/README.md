@@ -1,15 +1,8 @@
-# ML files
+# B1 model artifacts
 
-Place validated model artifacts here.
+- `B1_disease_risk_model.pkl`: uploaded sklearn/XGBoost pipeline.
+- `B1_label_encoder.pkl`: uploaded label encoder.
 
-Recommended names:
+The notebook shows B1 uses 30 environmental/demographic inputs and excludes symptoms. It is therefore connected to `/api/ai/environmental-risk/predict`, not to the symptom-assessment UI.
 
-- `model_a.pkl`
-- `model_a_label_encoder.pkl`
-- `model_a_features.pkl`
-- `model_b.pkl`
-- `model_b_features.pkl`
-
-Then set their paths in `.env`.
-
-Do not commit private training data, credentials, or unverified medical datasets to a public repository.
+The artifacts were saved with scikit-learn 1.9.0 and XGBoost 3.4.1 according to the notebook/model metadata, so the requirements match those versions.
