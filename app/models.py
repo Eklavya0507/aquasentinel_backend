@@ -15,7 +15,7 @@ from sqlalchemy import (
     Time,
     UniqueConstraint,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship as orm_relationship
 
 from .database import Base
 
@@ -82,9 +82,9 @@ class Account(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
-    profiles = relationship("Profile", back_populates="account", cascade="all, delete-orphan")
-    doctor_profile = relationship("DoctorProfile", back_populates="account", uselist=False)
-    government_profile = relationship("GovernmentOfficial", back_populates="account", uselist=False)
+    profiles = orm_relationship("Profile", back_populates="account", cascade="all, delete-orphan")
+    doctor_profile = orm_relationship("DoctorProfile", back_populates="account", uselist=False)
+    government_profile = orm_relationship("GovernmentOfficial", back_populates="account", uselist=False)
 
 
 class Profile(Base):
@@ -114,10 +114,10 @@ class Profile(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc, onupdate=now_utc)
 
-    account = relationship("Account", back_populates="profiles")
-    histories = relationship("MedicalHistory", back_populates="profile", cascade="all, delete-orphan")
-    model_a_assessments = relationship("ModelAAssessment", back_populates="profile")
-    model_b_snapshots = relationship("ModelBRiskSnapshot", back_populates="profile")
+    account = orm_relationship("Account", back_populates="profiles")
+    histories = orm_relationship("MedicalHistory", back_populates="profile", cascade="all, delete-orphan")
+    model_a_assessments = orm_relationship("ModelAAssessment", back_populates="profile")
+    model_b_snapshots = orm_relationship("ModelBRiskSnapshot", back_populates="profile")
 
 
 class MedicalHistory(Base):
@@ -133,8 +133,8 @@ class MedicalHistory(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
-    profile = relationship("Profile", back_populates="histories")
-    documents = relationship("MedicalDocument", back_populates="history", cascade="all, delete-orphan")
+    profile = orm_relationship("Profile", back_populates="histories")
+    documents = orm_relationship("MedicalDocument", back_populates="history", cascade="all, delete-orphan")
 
 
 class MedicalDocument(Base):
@@ -154,7 +154,7 @@ class MedicalDocument(Base):
 
     uploaded_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
-    history = relationship("MedicalHistory", back_populates="documents")
+    history = orm_relationship("MedicalHistory", back_populates="documents")
 
 
 class DoctorProfile(Base):
@@ -172,10 +172,10 @@ class DoctorProfile(Base):
         Enum(VerificationStatus), default=VerificationStatus.PENDING
     )
 
-    account = relationship("Account", back_populates="doctor_profile")
-    languages = relationship("DoctorLanguage", back_populates="doctor", cascade="all, delete-orphan")
-    schedules = relationship("DoctorSchedule", back_populates="doctor", cascade="all, delete-orphan")
-    reviews = relationship("DoctorReview", back_populates="doctor")
+    account = orm_relationship("Account", back_populates="doctor_profile")
+    languages = orm_relationship("DoctorLanguage", back_populates="doctor", cascade="all, delete-orphan")
+    schedules = orm_relationship("DoctorSchedule", back_populates="doctor", cascade="all, delete-orphan")
+    reviews = orm_relationship("DoctorReview", back_populates="doctor")
 
 
 class DoctorLanguage(Base):
@@ -187,7 +187,7 @@ class DoctorLanguage(Base):
     language_code: Mapped[str] = mapped_column(String(30))
     proficiency: Mapped[str | None] = mapped_column(String(40), nullable=True)
 
-    doctor = relationship("DoctorProfile", back_populates="languages")
+    doctor = orm_relationship("DoctorProfile", back_populates="languages")
 
 
 class GovernmentOfficial(Base):
@@ -207,7 +207,7 @@ class GovernmentOfficial(Base):
         Enum(VerificationStatus), default=VerificationStatus.PENDING
     )
 
-    account = relationship("Account", back_populates="government_profile")
+    account = orm_relationship("Account", back_populates="government_profile")
 
 
 class Hospital(Base):
@@ -227,10 +227,10 @@ class Hospital(Base):
     emergency_available: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    hours = relationship("HospitalHour", back_populates="hospital", cascade="all, delete-orphan")
-    exceptions = relationship("HospitalScheduleException", back_populates="hospital", cascade="all, delete-orphan")
-    specialists = relationship("HospitalSpecialist", back_populates="hospital", cascade="all, delete-orphan")
-    doctor_schedules = relationship("DoctorSchedule", back_populates="hospital")
+    hours = orm_relationship("HospitalHour", back_populates="hospital", cascade="all, delete-orphan")
+    exceptions = orm_relationship("HospitalScheduleException", back_populates="hospital", cascade="all, delete-orphan")
+    specialists = orm_relationship("HospitalSpecialist", back_populates="hospital", cascade="all, delete-orphan")
+    doctor_schedules = orm_relationship("DoctorSchedule", back_populates="hospital")
 
 
 class HospitalHour(Base):
@@ -244,7 +244,7 @@ class HospitalHour(Base):
     close_time: Mapped[time | None] = mapped_column(Time, nullable=True)
     is_closed: Mapped[bool] = mapped_column(Boolean, default=False)
 
-    hospital = relationship("Hospital", back_populates="hours")
+    hospital = orm_relationship("Hospital", back_populates="hours")
 
 
 class HospitalScheduleException(Base):
@@ -258,7 +258,7 @@ class HospitalScheduleException(Base):
     open_time: Mapped[time | None] = mapped_column(Time, nullable=True)
     close_time: Mapped[time | None] = mapped_column(Time, nullable=True)
 
-    hospital = relationship("Hospital", back_populates="exceptions")
+    hospital = orm_relationship("Hospital", back_populates="exceptions")
 
 
 class HospitalSpecialist(Base):
@@ -271,7 +271,7 @@ class HospitalSpecialist(Base):
     start_time: Mapped[time | None] = mapped_column(Time, nullable=True)
     end_time: Mapped[time | None] = mapped_column(Time, nullable=True)
 
-    hospital = relationship("Hospital", back_populates="specialists")
+    hospital = orm_relationship("Hospital", back_populates="specialists")
 
 
 class DoctorSchedule(Base):
@@ -288,8 +288,8 @@ class DoctorSchedule(Base):
     valid_until: Mapped[date | None] = mapped_column(Date, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
-    doctor = relationship("DoctorProfile", back_populates="schedules")
-    hospital = relationship("Hospital", back_populates="doctor_schedules")
+    doctor = orm_relationship("DoctorProfile", back_populates="schedules")
+    hospital = orm_relationship("Hospital", back_populates="doctor_schedules")
 
 
 class DoctorReview(Base):
@@ -313,7 +313,7 @@ class DoctorReview(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
-    doctor = relationship("DoctorProfile", back_populates="reviews")
+    doctor = orm_relationship("DoctorProfile", back_populates="reviews")
 
 
 class CaseReport(Base):
@@ -388,7 +388,7 @@ class ModelAAssessment(Base):
     model_version: Mapped[str | None] = mapped_column(String(120), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
-    profile = relationship("Profile", back_populates="model_a_assessments")
+    profile = orm_relationship("Profile", back_populates="model_a_assessments")
 
 
 class ModelBRiskSnapshot(Base):
@@ -406,7 +406,7 @@ class ModelBRiskSnapshot(Base):
 
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
 
-    profile = relationship("Profile", back_populates="model_b_snapshots")
+    profile = orm_relationship("Profile", back_populates="model_b_snapshots")
 
 
 class RegionalAlert(Base):
@@ -455,3 +455,4 @@ class AuditLog(Base):
     old_value: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     new_value: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=now_utc)
+
